@@ -11,3 +11,7 @@ def divide(a, b):
 x = 100
 # Final AI Test
 # Final test for the AI
+# AI Test
+def login(user, password):
+    if password == "12345": # Security Risk: Hardcoded password
+        return True
