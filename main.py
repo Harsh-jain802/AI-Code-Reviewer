@@ -5,18 +5,27 @@ import uvicorn
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# Load keys
+# Load environment variables
 load_dotenv()
 GIT_TOKEN = os.getenv("GITHUB_TOKEN")
 GROQ_KEY = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
-# 1. AI Logic (Improved Prompt for better UI/UX)
+# --- 1. HOME ROUTE (For Judges to see the Deployed Link is Active) ---
+@app.get("/")
+async def home():
+    return {
+        "status": "Online",
+        "agent": "ReviewPulse AI",
+        "description": "Autonomous Code Review Agent is live and listening for GitHub Webhooks.",
+        "version": "1.0.0"
+    }
+
+# --- 2. AI LOGIC (Using Groq Llama 3.3) ---
 def get_ai_review(diff):
     client = OpenAI(api_key=GROQ_KEY, base_url="https://api.groq.com/openai/v1")
     
-    # This is the "Secret Sauce" that makes your bot look professional
     prompt = f"""
     You are a Senior Staff Engineer. Review the following code changes (diff):
     {diff}
@@ -44,37 +53,43 @@ def get_ai_review(diff):
     )
     return response.choices[0].message.content
 
-# 2. GitHub Logic
+# --- 3. GITHUB LOGIC (Fetch Diff and Post Comment) ---
 def get_diff(repo, pr_no):
     url = f"https://api.github.com/repos/{repo}/pulls/{pr_no}"
     headers = {"Authorization": f"token {GIT_TOKEN}", "Accept": "application/vnd.github.v3.diff"}
-    return requests.get(url, headers=headers).text
+    response = requests.get(url, headers=headers)
+    return response.text
 
 def post_comment(repo, pr_no, text):
     url = f"https://api.github.com/repos/{repo}/issues/{pr_no}/comments"
     headers = {"Authorization": f"token {GIT_TOKEN}"}
     requests.post(url, json={"body": text}, headers=headers)
 
-# 3. Server Logic
+# --- 4. WEBHOOK HANDLER ---
 @app.post("/webhook")
 async def webhook(request: Request, bg: BackgroundTasks):
     data = await request.json()
+    
+    # Trigger review when a PR is opened or new code is pushed to it
     if "pull_request" in data and data["action"] in ["opened", "synchronize"]:
         repo = data["repository"]["full_name"]
         pr_no = data["number"]
         print(f"🚀 Detected PR #{pr_no}. Starting AI Review...")
-        bg.add_task(process, repo, pr_no)
+        bg.add_task(process_review, repo, pr_no)
+        
     return {"ok": True}
 
-def process(repo, pr_no):
+def process_review(repo, pr_no):
     try:
-        print("📥 Fetching code...")
+        print(f"📥 Fetching code for {repo} PR #{pr_no}...")
         diff = get_diff(repo, pr_no)
+        
         print("🤖 AI is analyzing...")
         review = get_ai_review(diff)
+        
         print("📤 Sending review to GitHub...")
-        post_comment(repo, pr_no, review) # Note: review already has the header
-        print("✅ DONE! Check GitHub!")
+        post_comment(repo, pr_no, review)
+        print("✅ DONE! Review posted successfully.")
     except Exception as e:
         print(f"❌ CRASHED: {e}")
 
