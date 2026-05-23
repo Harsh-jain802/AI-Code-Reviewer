@@ -10,3 +10,4 @@ def divide_numbers(a, b):
 def save_user(username, password):
     # BUG 3: Storing password in plain text
     print(f"Saving user {username} with password {password}")
+# Testing the new UI
