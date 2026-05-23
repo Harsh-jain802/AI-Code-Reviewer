@@ -15,3 +15,4 @@ x = 100
 def login(user, password):
     if password == "12345": # Security Risk: Hardcoded password
         return True
+# Debugging the crash
