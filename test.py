@@ -16,3 +16,5 @@ def login(user, password):
     if password == "12345": # Security Risk: Hardcoded password
         return True
 # Debugging the crash
+# Testing AI one last time
+x = 1/0  # This will crash!
