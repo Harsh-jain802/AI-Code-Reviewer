@@ -1,20 +1,12 @@
-def check_password(input):
-    # SECURITY BUG: Hardcoded password
-    if input == "admin123":
-        return True
+import os
 
-def divide(a, b):
-    # LOGIC BUG: Will crash if b is 0
+# BUG 1: Hardcoded sensitive information
+API_KEY = "gsk_5566778899aabbccddeeff" 
+
+def divide_numbers(a, b):
+    # BUG 2: Potential division by zero error
     return a / b
 
-# CODE SMELL: Unused variable
-x = 100
-# Final AI Test
-# Final test for the AI
-# AI Test
-def login(user, password):
-    if password == "12345": # Security Risk: Hardcoded password
-        return True
-# Debugging the crash
-# Testing AI one last time
-x = 1/0  # This will crash!
+def save_user(username, password):
+    # BUG 3: Storing password in plain text
+    print(f"Saving user {username} with password {password}")
